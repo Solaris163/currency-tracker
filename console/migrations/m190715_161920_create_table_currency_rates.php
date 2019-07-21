@@ -18,9 +18,9 @@ class m190715_161920_create_table_currency_rates extends Migration
     {
         $this->createTable('currency_rates', [
             'id' => $this->primaryKey(),
-            'date' => $this->string(),
-            'currency_id' => $this->integer(),
-            'currency_rate' => $this->DECIMAL (6,4),
+            'date' => $this->string()->notNull(),
+            'currency_id' => $this->integer()->notNull(),
+            'currency_rate' => $this->DECIMAL (6,4)->notNull(),
         ]);
     }
 

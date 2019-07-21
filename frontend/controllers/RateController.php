@@ -11,9 +11,7 @@ class RateController extends Controller
 {
     const LIMIT_FALL_RATE = 2; //предельное понижение курса, при превышении которого посылается сообщение администратору
     const XML_FILE_URL = 'http://www.cbr.ru/scripts/XML_daily.asp'; //адрес файла с текущими курсами валют
-    const ADMIN_EMAIL = 'admin@test.ru';
     const ATTEMPTS_DELAYS = '0 60 1800 3600 21600'; //массив задержек между попытками получения файла xml
-
 
     /**
      * {@inheritdoc}
@@ -22,19 +20,25 @@ class RateController extends Controller
     {
         $xml = $this->getXml(); //получим объект из файла xml
 
-        //переберем все валюты и внесем в базу курсы тех, которые нужно отслеживать
-        foreach ($xml->Valute as $currency)
+        if ($xml != false)
         {
-            //проверяем находится ли валюта в списке для отслеживания, который находится в модели CurrencyRates
-            if (array_key_exists((string) $currency->CharCode, CurrencyRates::$currencyList))
+            //переберем все валюты из массива currencyList, который находится в файле common/config/params.php
+            foreach (\Yii::$app->params['currencyList'] as $currencyCode => $id)
             {
                 $model = new CurrencyRates(); //создаем модель курса валют для внесения в базу
-                $model->date = ((array) $xml)["@attributes"]["Date"]; //вставляем в модель дату обновления курса
-                //Вставляем в модель id валюты, соответствующий названию валюты из списка валют $currencyList
-                $model->currency_id = CurrencyRates::$currencyList["{$currency->CharCode}"];
-                $model->currency_rate = $this->getFloat((string) $currency->Value); //вставляем в модель курс валюты
+                $model->currency_id = $id; //Вставляем в модель id валюты
+                //переберем валюты в файле xml и найдем ту, у которой CharCode равнен $currencyCode
+                foreach ($xml->Valute as $currency)
+                {
+                    if ($currency->CharCode == $currencyCode)
+                    {
+                        $model->date = ((array) $xml)["@attributes"]["Date"]; //вставляем в модель дату обновления курса
+                        //С помощью метода getFloat() преобразуем значение курса валюты в число с плавающей точкой и вставляем в модель
+                        $model->currency_rate = $this->getFloat((string) $currency->Value);
 
-                $this->checkAndSaveRate($model);
+                        $this->checkAndSaveRate($model); //анализируем курс и сохраняем его в базу данных
+                    }
+                }
             }
         }
     }
@@ -42,7 +46,7 @@ class RateController extends Controller
     /**
      * Метод получает массив с временными задержками из константы ATTEMPTS_DELAYS
      * Перебирает этот массив, пока не получит объект из файла xml, или пока не кончится массив
-     * //Метод возвращает объект xml или false//Затем вызывает метод getAndSaveRates
+     * Метод возвращает объект xml или false
      */
     public function getXml()
     {
@@ -82,7 +86,7 @@ class RateController extends Controller
     public function checkAndSaveRate($model)
     {
         //проверяем нет ли в базе уже записи для данной валюты на эту же дату
-        if (!$model->checkIsDateInBase())
+        if (!$model->checkExistDateInBase())
         {
             //если такой даты в базе нет, то проверяем не упал ли курс более чем на величину константы LIMIT_FALL_RATE
             if ($model->getRateChange() > self::LIMIT_FALL_RATE)
@@ -122,7 +126,7 @@ class RateController extends Controller
     public function contact($message)
     {
         \Yii::$app->mailer->compose()
-            ->setTo(self::ADMIN_EMAIL)
+            ->setTo(\Yii::$app->params['adminEmail'])
             ->setSubject('currency rates')
             ->setTextBody($message)
             ->send();

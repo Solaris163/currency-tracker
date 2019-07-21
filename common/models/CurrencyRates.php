@@ -15,8 +15,6 @@ use Yii;
  */
 class CurrencyRates extends \yii\db\ActiveRecord
 {
-    public static $currencyList = ['EUR' => 1, 'USD' => 2]; //список валют, которые отслеживает приложение
-
     /**
      * {@inheritdoc}
      */
@@ -53,7 +51,7 @@ class CurrencyRates extends \yii\db\ActiveRecord
     /**
      * Метод проверяет, есть ли в базе данных запись для данной валюты с данной датой
      */
-    public function checkIsDateInBase()
+    public function checkExistDateInBase()
     {
         $result = self::find()->where(['currency_id' => $this->currency_id])
             ->andWhere(['date' => $this->date])->exists();
