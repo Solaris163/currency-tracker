@@ -29,7 +29,8 @@ class CurrencyRates extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['date'], 'safe'],
+            [['date', 'currency_id', 'currency_rate'], 'required'],
+            [['date'], 'string'],
             [['currency_id'], 'integer'],
             [['currency_rate'], 'number'],
         ];
