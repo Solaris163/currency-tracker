@@ -37,6 +37,7 @@ class RateController extends Controller
                         $model->currency_rate = $this->getFloat((string) $currency->Value);
 
                         $this->checkAndSaveRate($model); //анализируем курс и сохраняем его в базу данных
+                        break; //прерывеам foreach и переходим к следующей валюте из массива currencyList
                     }
                 }
             }
