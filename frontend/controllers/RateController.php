@@ -32,7 +32,7 @@ class RateController extends Controller
                 {
                     if ($currency->CharCode == $currencyCode)
                     {
-                        $model->date = ((array) $xml)["@attributes"]["Date"]; //вставляем в модель дату обновления курса
+                        $model->date = (string) $xml->attributes()->Date; //вставляем в модель дату обновления курса
                         //С помощью метода getFloat() преобразуем значение курса валюты в число с плавающей точкой и вставляем в модель
                         $model->currency_rate = $this->getFloat((string) $currency->Value);
 
